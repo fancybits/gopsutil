@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/fancybits/gopsutil/internal/common"
 )
 
 type TimesStat struct {
