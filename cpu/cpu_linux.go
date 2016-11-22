@@ -113,6 +113,7 @@ func Info() ([]InfoStat, error) {
 	lines, _ := common.ReadLines(filename)
 
 	var ret []InfoStat
+	var processorName string
 
 	c := InfoStat{CPU: -1, Cores: 1}
 	for _, line := range lines {
@@ -124,6 +125,8 @@ func Info() ([]InfoStat, error) {
 		value := strings.TrimSpace(fields[1])
 
 		switch key {
+		case "Processor":
+			processorName = value
 		case "processor":
 			if c.CPU >= 0 {
 				err := finishCPUInfo(&c)
@@ -132,7 +135,7 @@ func Info() ([]InfoStat, error) {
 				}
 				ret = append(ret, c)
 			}
-			c = InfoStat{Cores: 1}
+			c = InfoStat{Cores: 1, ModelName: processorName}
 			t, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return ret, err
