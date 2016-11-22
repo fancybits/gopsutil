@@ -84,7 +84,7 @@ func finishCPUInfo(c *InfoStat) error {
 	// then we ignore the error
 	if err != nil {
 		if c.Mhz == 0 {
-			return err
+			return nil
 		} else {
 			return nil
 		}
