@@ -5,8 +5,10 @@ package load
 import (
 	"context"
 	"io/ioutil"
+	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -16,6 +18,29 @@ func Avg() (*AvgStat, error) {
 }
 
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
+	if runtime.GOOS == "android" {
+		return sysinfoAvgWithContext(ctx)
+	} else {
+		return fileAvgWithContext(ctx)
+	}
+}
+
+func sysinfoAvgWithContext(ctx context.Context) (*AvgStat, error) {
+	var info syscall.Sysinfo_t
+	err := syscall.Sysinfo(&info)
+	if err != nil {
+		return nil, err
+	}
+
+	const si_load_shift = 16
+	return &AvgStat{
+		Load1:  float64(info.Loads[0]) / float64(1<<si_load_shift),
+		Load5:  float64(info.Loads[1]) / float64(1<<si_load_shift),
+		Load15: float64(info.Loads[2]) / float64(1<<si_load_shift),
+	}, nil
+}
+
+func fileAvgWithContext(ctx context.Context) (*AvgStat, error) {
 	values, err := readLoadAvgFromFile()
 	if err != nil {
 		return nil, err
