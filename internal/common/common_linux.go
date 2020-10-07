@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -66,6 +67,8 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 		statFile = "uptime"
 	} else if system == "docker" && role == "guest" {
 		// also docker, guest
+		statFile = "uptime"
+	} else if runtime.GOOS == "android" {
 		statFile = "uptime"
 	}
 
