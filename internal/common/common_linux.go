@@ -69,7 +69,7 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 		// also docker, guest
 		statFile = "uptime"
 	} else if runtime.GOOS == "android" {
-		statFile = "uptime"
+		return 0, ErrNotImplementedError
 	}
 
 	filename := HostProc(statFile)
