@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -221,7 +222,11 @@ var fsTypeMap = map[int64]string{
 func PartitionsWithContext(ctx context.Context, all bool) ([]PartitionStat, error) {
 	useMounts := false
 
-	filename := common.HostProc("1/mountinfo")
+	path := "1/mountinfo"
+	if runtime.GOOS == "android" {
+		path = "self/mountinfo"
+	}
+	filename := common.HostProc(path)
 	lines, err := common.ReadLines(filename)
 	if err != nil {
 		if err != err.(*os.PathError) {
