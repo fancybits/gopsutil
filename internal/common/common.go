@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -63,7 +64,7 @@ func (i Invoke) CommandWithContext(ctx context.Context, name string, arg ...stri
 
 type FakeInvoke struct {
 	Suffix string // Suffix species expected file name suffix such as "fail"
-	Error  error  // If Error specfied, return the error.
+	Error  error  // If Error specified, return the error.
 }
 
 // Command in FakeInvoke returns from expected file if exists.
@@ -94,10 +95,9 @@ func (i FakeInvoke) CommandWithContext(ctx context.Context, name string, arg ...
 
 var ErrNotImplementedError = errors.New("not implemented yet")
 
-// ReadFile reads contents from a file.
+// ReadFile reads contents from a file
 func ReadFile(filename string) (string, error) {
 	content, err := ioutil.ReadFile(filename)
-
 	if err != nil {
 		return "", err
 	}
@@ -114,8 +114,8 @@ func ReadLines(filename string) ([]string, error) {
 // ReadLinesOffsetN reads contents from file and splits them by new line.
 // The offset tells at which line number to start.
 // The count determines the number of lines to read (starting from offset):
-//   n >= 0: at most n lines
-//   n < 0: whole file
+// n >= 0: at most n lines
+// n < 0: whole file
 func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -129,6 +129,9 @@ func ReadLinesOffsetN(filename string, offset uint, n int) ([]string, error) {
 	for i := 0; i < n+int(offset) || n < 0; i++ {
 		line, err := r.ReadString('\n')
 		if err != nil {
+			if err == io.EOF && len(line) > 0 {
+				ret = append(ret, strings.Trim(line, "\n"))
+			}
 			break
 		}
 		if i < int(offset) {
@@ -165,7 +168,7 @@ func UintToString(orig []uint8) string {
 			size = i
 			break
 		}
-		ret[i] = o
+		ret[i] = byte(o)
 	}
 	if size == -1 {
 		size = len(orig)
@@ -224,31 +227,31 @@ func ReadInts(filename string) ([]int64, error) {
 	return ret, nil
 }
 
-// HexToUint32 parses Hex to uint32 without error.
+// Parse Hex to uint32 without error
 func HexToUint32(hex string) uint32 {
 	vv, _ := strconv.ParseUint(hex, 16, 32)
 	return uint32(vv)
 }
 
-// mustParseInt32 parses to int32 without error.
+// Parse to int32 without error
 func mustParseInt32(val string) int32 {
 	vv, _ := strconv.ParseInt(val, 10, 32)
 	return int32(vv)
 }
 
-// mustParseUint64 parses to uint64 without error.
+// Parse to uint64 without error
 func mustParseUint64(val string) uint64 {
 	vv, _ := strconv.ParseInt(val, 10, 64)
 	return uint64(vv)
 }
 
-// mustParseFloat64 parses to Float64 without error.
+// Parse to Float64 without error
 func mustParseFloat64(val string) float64 {
 	vv, _ := strconv.ParseFloat(val, 64)
 	return vv
 }
 
-// StringsHas checks the target string slice contains src or not.
+// StringsHas checks the target string slice contains src or not
 func StringsHas(target []string, src string) bool {
 	for _, t := range target {
 		if strings.TrimSpace(t) == src {
@@ -258,7 +261,7 @@ func StringsHas(target []string, src string) bool {
 	return false
 }
 
-// StringsContains checks the src in any string of the target string slice.
+// StringsContains checks the src in any string of the target string slice
 func StringsContains(target []string, src string) bool {
 	for _, t := range target {
 		if strings.Contains(t, src) {
@@ -306,6 +309,15 @@ func PathExists(filename string) bool {
 		return true
 	}
 	return false
+}
+
+// PathExistsWithContents returns the filename exists and it is not empty
+func PathExistsWithContents(filename string) bool {
+	info, err := os.Stat(filename)
+	if err != nil {
+		return false
+	}
+	return info.Size() > 4 // at least 4 bytes
 }
 
 // GetEnv retrieves the environment variable key. If it does not exist it returns the default.

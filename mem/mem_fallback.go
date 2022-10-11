@@ -1,11 +1,12 @@
-// +build !darwin,!linux,!freebsd,!openbsd,!solaris,!windows
+//go:build !darwin && !linux && !freebsd && !openbsd && !solaris && !windows && !plan9 && !aix
+// +build !darwin,!linux,!freebsd,!openbsd,!solaris,!windows,!plan9,!aix
 
 package mem
 
 import (
 	"context"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func VirtualMemory() (*VirtualMemoryStat, error) {

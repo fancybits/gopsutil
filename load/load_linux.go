@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package load
@@ -9,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shirou/gopsutil/internal/common"
+	"github.com/shirou/gopsutil/v3/internal/common"
 )
 
 func Avg() (*AvgStat, error) {
@@ -17,28 +18,29 @@ func Avg() (*AvgStat, error) {
 }
 
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
-	stat, err := fileAvgWithContext(ctx)
+	stat, err := fileAvgWithContext()
 	if err != nil {
-		stat, err = sysinfoAvgWithContext(ctx)
+		stat, err = sysinfoAvgWithContext()
 	}
 	return stat, err
 }
 
-func sysinfoAvgWithContext(ctx context.Context) (*AvgStat, error) {
+func sysinfoAvgWithContext() (*AvgStat, error) {
 	var info syscall.Sysinfo_t
-	if err := syscall.Sysinfo(&info); err != nil {
+	err := syscall.Sysinfo(&info)
+	if err != nil {
 		return nil, err
 	}
 
-	const siLoadShift = 16
+	const si_load_shift = 16
 	return &AvgStat{
-		Load1:  float64(info.Loads[0]) / float64(1<<siLoadShift),
-		Load5:  float64(info.Loads[1]) / float64(1<<siLoadShift),
-		Load15: float64(info.Loads[2]) / float64(1<<siLoadShift),
+		Load1:  float64(info.Loads[0]) / float64(1<<si_load_shift),
+		Load5:  float64(info.Loads[1]) / float64(1<<si_load_shift),
+		Load15: float64(info.Loads[2]) / float64(1<<si_load_shift),
 	}, nil
 }
 
-func fileAvgWithContext(ctx context.Context) (*AvgStat, error) {
+func fileAvgWithContext() (*AvgStat, error) {
 	values, err := readLoadAvgFromFile()
 	if err != nil {
 		return nil, err
@@ -66,7 +68,7 @@ func fileAvgWithContext(ctx context.Context) (*AvgStat, error) {
 	return ret, nil
 }
 
-// Misc returnes miscellaneous host-wide statistics.
+// Misc returns miscellaneous host-wide statistics.
 // Note: the name should be changed near future.
 func Misc() (*MiscStat, error) {
 	return MiscWithContext(context.Background())
@@ -102,6 +104,7 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 		default:
 			continue
 		}
+
 	}
 
 	procsTotal, err := getProcsTotal()

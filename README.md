@@ -1,27 +1,27 @@
 # gopsutil: psutil for golang
 
-[![Test](https://github.com/shirou/gopsutil/actions/workflows/test.yml/badge.svg)](https://github.com/shirou/gopsutil/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/shirou/gopsutil/badge.svg?branch=master)](https://coveralls.io/github/shirou/gopsutil?branch=master) [![Go Reference](https://pkg.go.dev/badge/github.com/shirou/gopsutil.svg)](https://pkg.go.dev/github.com/shirou/gopsutil)
+[![Test](https://github.com/shirou/gopsutil/actions/workflows/test.yml/badge.svg)](https://github.com/shirou/gopsutil/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/shirou/gopsutil/badge.svg?branch=master)](https://coveralls.io/github/shirou/gopsutil?branch=master) [![Go Reference](https://pkg.go.dev/badge/github.com/shirou/gopsutil/v3.svg)](https://pkg.go.dev/github.com/shirou/gopsutil/v3) [![Go Documentation](https://godocs.io/github.com/shirou/gopsutil/v3?status.svg)](https://godocs.io/github.com/shirou/gopsutil/v3) [![Calendar Versioning](https://img.shields.io/badge/calver-vMAJOR.YY.MM-22bfda.svg)](https://calver.org/)
 
 This is a port of psutil (https://github.com/giampaolo/psutil). The
 challenge is porting all psutil functions on some architectures.
 
 ## v3 migration
 
-from v3.20.10, gopsutil becomes v3 which breaks backwards compatiblity.
-See [v3Changes.md](_tools/v3migration/v3Changes.md) more detail changes.
+From v3.20.10, gopsutil becomes v3 which breaks backwards compatibility.
+See [v3Changes.md](_tools/v3migration/v3Changes.md) for more detailed changes.
 
 ## Tag semantics
 
 gopsutil tag policy is almost same as Semantic Versioning, but
-automatically increase like Ubuntu versioning.
+automatically increases like [Ubuntu versioning](https://calver.org/).
 
-for example, v2.17.04 means
+For example, v2.17.04 means
 
 - v2: major version
 - 17: release year, 2017
 - 04: release month
 
-gopsutil aims to keep backwards-compatiblity until major version change.
+gopsutil aims to keep backwards compatibility until major version change.
 
 Tagged at every end of month, but if there are only a few commits, it
 can be skipped.
@@ -31,7 +31,7 @@ can be skipped.
 - FreeBSD i386/amd64/arm
 - Linux i386/amd64/arm(raspberry pi)
 - Windows i386/amd64/arm/arm64
-- Darwin i386/amd64
+- Darwin amd64/arm64
 - OpenBSD amd64 (Thank you @mpfz0r!)
 - Solaris amd64 (developed and tested on SmartOS/Illumos, Thank you
   @jen20!)
@@ -90,13 +90,16 @@ environment variable.
 You can set an alternative location to `/dev` by setting the `HOST_DEV`
 environment variable.
 
+You can set an alternative location to `/proc/N/mountinfo` by setting the
+`HOST_PROC_MOUNTINFO` environment variable.
+
 ## Documentation
 
-see http://godoc.org/github.com/shirou/gopsutil
+See https://pkg.go.dev/github.com/shirou/gopsutil/v3 or https://godocs.io/github.com/shirou/gopsutil/v3
 
 ## Requirements
 
-- go1.11 or above is required.
+- go1.16 or above is required.
 
 ## More Info
 
@@ -130,7 +133,7 @@ will provide useful information.
   - CacheSize
   - Flags (ex: "fpu vme de pse tsc msr pae mce cx8 ...")
   - Microcode
-- load/LoadAvg() (linux, freebsd)
+- load/Avg() (linux, freebsd, solaris)
   - Load1
   - Load5
   - Load15
@@ -157,8 +160,8 @@ Some code is ported from Ohai. many thanks.
 
 |name                  |Linux  |FreeBSD  |OpenBSD  |macOS   |Windows  |Solaris  |Plan 9   |
 |----------------------|-------|---------|---------|--------|---------|---------|---------|
-|cpu\_times            |x      |x        |x        |x       |x        |         |         |
-|cpu\_count            |x      |x        |x        |x       |x        |         |         |
+|cpu\_times            |x      |x        |x        |x       |x        |         |b        |
+|cpu\_count            |x      |x        |x        |x       |x        |         |x        |
 |cpu\_percent          |x      |x        |x        |x       |x        |         |         |
 |cpu\_times\_percent   |x      |x        |x        |x       |x        |         |         |
 |virtual\_memory       |x      |x        |x        |x       |x        | b       |x        |
@@ -188,11 +191,11 @@ Some code is ported from Ohai. many thanks.
 |cmdline             |x      |x        |         |x      |x        |
 |create\_time        |x      |         |         |x      |x        |
 |status              |x      |x        |x        |x      |         |
-|cwd                 |x      |         |         |       |         |
+|cwd                 |x      |         |         |x      |         |
 |exe                 |x      |x        |x        |       |x        |
 |uids                |x      |x        |x        |x      |         |
 |gids                |x      |x        |x        |x      |         |
-|terminal            |x      |x        |x        |x      |         |
+|terminal            |x      |x        |x        |       |         |
 |io\_counters        |x      |x        |x        |       |x        |
 |nice                |x      |x        |x        |x      |x        |
 |num\_fds            |x      |         |         |       |         |
@@ -229,7 +232,7 @@ Some code is ported from Ohai. many thanks.
 |**HostInfo**     |       |         |         |        |        |         |
 |hostname         |x      |x        |x        |x       |x       |x        |
 |uptime           |x      |x        |x        |x       |        |x        |
-|proces           |x      |x        |x        |        |        |x        |
+|process          |x      |x        |x        |        |        |x        |
 |os               |x      |x        |x        |x       |x       |x        |
 |platform         |x      |x        |x        |x       |        |x        |
 |platformfamily   |x      |x        |x        |x       |        |x        |

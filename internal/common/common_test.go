@@ -32,10 +32,12 @@ func TestReadLinesOffsetN(t *testing.T) {
 
 func TestIntToString(t *testing.T) {
 	src := []int8{65, 66, 67}
-	if dst := IntToString(src); dst != "ABC" {
+	dst := IntToString(src)
+	if dst != "ABC" {
 		t.Error("could not convert")
 	}
 }
+
 func TestByteToString(t *testing.T) {
 	src := []byte{65, 66, 67}
 	dst := ByteToString(src)
@@ -57,16 +59,19 @@ func TestHexToUint32(t *testing.T) {
 }
 
 func TestMustParseInt32(t *testing.T) {
-	if ret := mustParseInt32("11111"); ret != int32(11111) {
+	ret := mustParseInt32("11111")
+	if ret != int32(11111) {
 		t.Error("could not parse")
 	}
 }
+
 func TestMustParseUint64(t *testing.T) {
 	ret := mustParseUint64("11111")
 	if ret != uint64(11111) {
 		t.Error("could not parse")
 	}
 }
+
 func TestMustParseFloat64(t *testing.T) {
 	ret := mustParseFloat64("11111.11")
 	if ret != float64(11111.11) {
@@ -77,6 +82,7 @@ func TestMustParseFloat64(t *testing.T) {
 		t.Error("could not parse")
 	}
 }
+
 func TestStringsContains(t *testing.T) {
 	target, err := ReadLines("common_test.go")
 	if err != nil {
@@ -96,11 +102,31 @@ func TestPathExists(t *testing.T) {
 	}
 }
 
+func TestPathExistsWithContents(t *testing.T) {
+	if !PathExistsWithContents("common_test.go") {
+		t.Error("exists but return not exists")
+	}
+	if PathExistsWithContents("should_not_exists.go") {
+		t.Error("not exists but return exists")
+	}
+
+	f, err := os.CreateTemp("", "empty_test.txt")
+	if err != nil {
+		t.Errorf("CreateTemp failed, %s", err)
+	}
+	defer os.Remove(f.Name()) // clean up
+
+	if PathExistsWithContents(f.Name()) {
+		t.Error("exists but no content file return true")
+	}
+}
+
 func TestHostEtc(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("windows doesn't have etc")
 	}
-	if p := HostEtc("mtab"); p != "/etc/mtab" {
+	p := HostEtc("mtab")
+	if p != "/etc/mtab" {
 		t.Errorf("invalid HostEtc, %s", p)
 	}
 }

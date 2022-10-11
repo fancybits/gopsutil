@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package common
@@ -16,19 +17,15 @@ import (
 )
 
 func DoSysctrl(mib string) ([]string, error) {
-	sysctl, err := exec.LookPath("sysctl")
-	if err != nil {
-		return []string{}, err
-	}
-	cmd := exec.Command(sysctl, "-n", mib)
+	cmd := exec.Command("sysctl", "-n", mib)
 	cmd.Env = getSysctrlEnv(os.Environ())
 	out, err := cmd.Output()
 	if err != nil {
 		return []string{}, err
 	}
 	v := strings.Replace(string(out), "{ ", "", 1)
-	v = strings.Replace(v, " }", "", 1)
-	values := strings.Fields(v)
+	v = strings.Replace(string(v), " }", "", 1)
+	values := strings.Fields(string(v))
 
 	return values, nil
 }
@@ -56,7 +53,7 @@ func NumProcs() (uint64, error) {
 }
 
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
-	system, role, err := Virtualization()
+	system, role, err := VirtualizationWithContext(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -78,18 +75,6 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
-	if statFile == "uptime" {
-		if len(lines) != 1 {
-			return 0, fmt.Errorf("wrong uptime format")
-		}
-		f := strings.Fields(lines[0])
-		b, err := strconv.ParseFloat(f[0], 64)
-		if err != nil {
-			return 0, err
-		}
-		t := uint64(time.Now().Unix()) - uint64(b)
-		return t, nil
-	}
 	if statFile == "stat" {
 		for _, line := range lines {
 			if strings.HasPrefix(line, "btime") {
@@ -105,6 +90,18 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 				return t, nil
 			}
 		}
+	} else if statFile == "uptime" {
+		if len(lines) != 1 {
+			return 0, fmt.Errorf("wrong uptime format")
+		}
+		f := strings.Fields(lines[0])
+		b, err := strconv.ParseFloat(f[0], 64)
+		if err != nil {
+			return 0, err
+		}
+		currentTime := float64(time.Now().UnixNano()) / float64(time.Second)
+		t := currentTime - b
+		return uint64(t), nil
 	}
 
 	return 0, fmt.Errorf("could not find btime")
@@ -114,7 +111,7 @@ func Virtualization() (string, string, error) {
 	return VirtualizationWithContext(context.Background())
 }
 
-// required variables for concurrency safe virtualization caching.
+// required variables for concurrency safe virtualization caching
 var (
 	cachedVirtMap   map[string]string
 	cachedVirtMutex sync.RWMutex
@@ -140,8 +137,10 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 
 		if PathExists(filepath.Join(filename, "capabilities")) {
 			contents, err := ReadLines(filepath.Join(filename, "capabilities"))
-			if err == nil && StringsContains(contents, "control_d") {
-				role = "host"
+			if err == nil {
+				if StringsContains(contents, "control_d") {
+					role = "host"
+				}
 			}
 		}
 	}
@@ -150,17 +149,19 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	if PathExists(filename) {
 		contents, err := ReadLines(filename)
 		if err == nil {
-			switch {
-			case StringsContains(contents, "kvm"):
+			if StringsContains(contents, "kvm") {
 				system = "kvm"
 				role = "host"
-			case StringsContains(contents, "vboxdrv"):
+			} else if StringsContains(contents, "hv_util") {
+				system = "hyperv"
+				role = "guest"
+			} else if StringsContains(contents, "vboxdrv") {
 				system = "vbox"
 				role = "host"
-			case StringsContains(contents, "vboxguest"):
+			} else if StringsContains(contents, "vboxguest") {
 				system = "vbox"
 				role = "guest"
-			case StringsContains(contents, "vmware"):
+			} else if StringsContains(contents, "vmware") {
 				system = "vmware"
 				role = "guest"
 			}
@@ -225,17 +226,16 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	if PathExists(filepath.Join(filename, "self", "cgroup")) {
 		contents, err := ReadLines(filepath.Join(filename, "self", "cgroup"))
 		if err == nil {
-			switch {
-			case StringsContains(contents, "lxc"):
+			if StringsContains(contents, "lxc") {
 				system = "lxc"
 				role = "guest"
-			case StringsContains(contents, "docker"):
+			} else if StringsContains(contents, "docker") {
 				system = "docker"
 				role = "guest"
-			case StringsContains(contents, "machine-rkt"):
+			} else if StringsContains(contents, "machine-rkt") {
 				system = "rkt"
 				role = "guest"
-			case PathExists("/usr/bin/lxc-version"):
+			} else if PathExists("/usr/bin/lxc-version") {
 				system = "lxc"
 				role = "host"
 			}
@@ -280,10 +280,16 @@ func GetOSRelease() (platform string, version string, err error) {
 			version = trimQuotes(field[1])
 		}
 	}
+
+	// cleanup amazon ID
+	if platform == "amzn" {
+		platform = "amazon"
+	}
+
 	return platform, version, nil
 }
 
-// trimQuotes removes quotes in the source string.
+// Remove quotes of the source string
 func trimQuotes(s string) string {
 	if len(s) >= 2 {
 		if s[0] == '"' && s[len(s)-1] == '"' {
