@@ -79,7 +79,8 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 		currentTime := time.Now().UnixNano() / int64(time.Second)
 		t := currentTime - int64(info.Uptime)
 		return uint64(t), nil
-	} else if err != nil {
+	}
+	if err != nil {
 		return 0, err
 	}
 
@@ -256,6 +257,11 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 			system = "rkt" // Is it true?
 			role = "host"
 		}
+	}
+
+	if PathExists(HostRoot(".dockerenv")) {
+		system = "docker"
+		role = "guest"
 	}
 
 	// before returning for the first time, cache the system and role
